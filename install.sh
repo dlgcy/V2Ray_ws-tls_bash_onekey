@@ -75,9 +75,16 @@ source '/etc/os-release'
 VERSION=$(echo "${VERSION}" | awk -F "[()]" '{print $2}')
 
 check_system() {
-    if [[ ( "${ID}" == "centos" || "${ID}" == "almalinux" ) && ${VERSION_ID} -ge 7 ]]; then
-        echo -e "${OK} ${GreenBG} 当前系统为 ${ID^} ${VERSION_ID} ${VERSION} ${Font}"
-        INS="yum"
+    if [[ "${ID}" == "centos" || "${ID}" == "almalinux" ]]; then
+        local major_ver
+        major_ver=$(echo "${VERSION_ID}" | cut -d '.' -f1)
+        if [[ ${major_ver} -ge 7 ]]; then
+            echo -e "${OK} ${GreenBG} 当前系统为 ${ID^} ${VERSION_ID} ${VERSION} ${Font}"
+            INS="yum"
+        else
+            echo -e "${Error} ${RedBG} 当前系统为 ${ID} ${VERSION_ID} 不在支持的系统列表内，安装中断 ${Font}"
+            exit 1
+        fi
     elif [[ "${ID}" == "debian" && ${VERSION_ID} -ge 8 ]]; then
         echo -e "${OK} ${GreenBG} 当前系统为 Debian ${VERSION_ID} ${VERSION} ${Font}"
         INS="apt"
