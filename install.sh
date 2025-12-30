@@ -388,7 +388,7 @@ v2ray_install() {
         if [[ "${v2ray_version_mode}" == "latest" ]]; then
             bash v2ray.sh --force
         else
-            bash v2ray.sh --version "${selected_v2ray_version}" --force
+            bash v2ray.sh --version "${selected_v2ray_version}"
         fi
         judge "安装 V2ray"
     else
@@ -1122,7 +1122,7 @@ menu() {
         if [[ "${v2ray_version_mode}" == "latest" ]]; then
             bash <(curl -L -s ${repo_base_url}/${github_branch}/v2ray.sh) --force
         else
-            bash <(curl -L -s ${repo_base_url}/${github_branch}/v2ray.sh) --version "${selected_v2ray_version}" --force
+            bash <(curl -L -s ${repo_base_url}/${github_branch}/v2ray.sh) --version "${selected_v2ray_version}"
         fi
         ;;
     4)
