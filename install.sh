@@ -36,6 +36,9 @@ shell_mode="None"
 github_branch="dlgcy"
 repo_base_url_default="https://raw.githubusercontent.com/dlgcy/V2Ray_ws-tls_bash_onekey"
 repo_base_url="${repo_base_url_default}"
+recommended_v2ray_version="5.2.1"
+v2ray_version_mode="recommended"
+selected_v2ray_version="${recommended_v2ray_version}"
 version_cmp="/tmp/version_cmp.tmp"
 v2ray_conf_dir="/etc/v2ray"
 nginx_conf_dir="/etc/nginx/conf/conf.d"
@@ -84,6 +87,41 @@ init_repo_settings() {
     read -rp "请输入 GitHub 分支(默认:dlgcy): " input_branch
     [[ -z ${input_branch} ]] && input_branch="dlgcy"
     github_branch="${input_branch}"
+}
+
+select_v2ray_version() {
+    echo "请选择 V2Ray 版本:"
+    echo "1: 最新"
+    echo "2: 推荐版本(${recommended_v2ray_version})"
+    echo "3: 指定版本"
+    read -rp "请输入(默认:2): " v_choice
+    [[ -z ${v_choice} ]] && v_choice=2
+    case ${v_choice} in
+        1)
+            v2ray_version_mode="latest"
+            selected_v2ray_version=""
+            ;;
+        2)
+            v2ray_version_mode="recommended"
+            selected_v2ray_version="${recommended_v2ray_version}"
+            ;;
+        3)
+            read -rp "请输入版本号(例如 5.2.1): " specified_ver
+            if [[ -z ${specified_ver} ]]; then
+                echo -e "${Error} ${RedBG} 未输入版本号，使用推荐版本 ${recommended_v2ray_version} ${Font}"
+                v2ray_version_mode="recommended"
+                selected_v2ray_version="${recommended_v2ray_version}"
+            else
+                v2ray_version_mode="specified"
+                selected_v2ray_version="${specified_ver}"
+            fi
+            ;;
+        *)
+            echo -e "${Error} ${RedBG} 输入无效，使用推荐版本 ${recommended_v2ray_version} ${Font}"
+            v2ray_version_mode="recommended"
+            selected_v2ray_version="${recommended_v2ray_version}"
+            ;;
+    esac
 }
 
 check_system() {
@@ -347,7 +385,11 @@ v2ray_install() {
     if [[ -f v2ray.sh ]]; then
         rm -rf $v2ray_systemd_file
         systemctl daemon-reload
-        bash v2ray.sh --force
+        if [[ "${v2ray_version_mode}" == "latest" ]]; then
+            bash v2ray.sh --force
+        else
+            bash v2ray.sh --version "${selected_v2ray_version}" --force
+        fi
         judge "安装 V2ray"
     else
         echo -e "${Error} ${RedBG} V2ray 安装文件下载失败，请检查下载地址是否可用 ${Font}"
@@ -938,6 +980,7 @@ install_v2ray_ws_tls() {
     domain_check
     old_config_exist_check
     port_alterid_set
+    select_v2ray_version
     v2ray_install
     port_exist_check 80
     port_exist_check "${port}"
@@ -965,6 +1008,7 @@ install_v2_h2() {
     domain_check
     old_config_exist_check
     port_alterid_set
+    select_v2ray_version
     v2ray_install
     port_exist_check 80
     port_exist_check "${port}"
@@ -1074,7 +1118,12 @@ menu() {
         install_v2_h2
         ;;
     3)
-        bash <(curl -L -s ${repo_base_url}/${github_branch}/v2ray.sh)
+        select_v2ray_version
+        if [[ "${v2ray_version_mode}" == "latest" ]]; then
+            bash <(curl -L -s ${repo_base_url}/${github_branch}/v2ray.sh) --force
+        else
+            bash <(curl -L -s ${repo_base_url}/${github_branch}/v2ray.sh) --version "${selected_v2ray_version}" --force
+        fi
         ;;
     4)
         read -rp "请输入UUID:" UUID
